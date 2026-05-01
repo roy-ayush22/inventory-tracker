@@ -2,37 +2,49 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 // User
-const userSchema = new Schema({
-  _id: ObjectId,
-  name: String, // required, 2-30 chars
-  email: String, // required, unique
-  password: String, // hashed, min 6 chars
-  householdId: ObjectId, // nullable
-  createdAt: Date,
+const userSchemaDefinition = new Schema({
+  username: { type: String, required: true, minlength: 2, maxlength: 30 },
+  email: { type: String },
+  password: { type: String, required: true, minlength: 6 },
+  householdId: { type: Schema.Types.ObjectId, ref: "Household", default: null },
+  createdAt: { type: Date, default: Date.now },
 });
 
 // Household
-const householdSchema = new Schema({
-  _id: ObjectId,
-  name: String, // required, 3-30 chars
-  inviteCode: String, // unique, 6 chars uppercase
-  members: [ObjectId], // user references
-  wasteScore: Number, // 0-100, default 0
-  createdAt: Date,
+const householdSchemaDefinition = new Schema({
+  name: { type: String, required: true, minlength: 3, maxlength: 30 },
+  inviteCode: { type: String, unique: true, uppercase: true, length: 6 },
+  members: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  wasteScore: { type: Number, min: 0, max: 100, default: 0 },
+  createdAt: { type: Date, default: Date.now },
 });
 
 // Item
-const itemSchema = new Schema({
-  _id: ObjectId,
-  householdId: ObjectId, // required
-  addedBy: ObjectId, // user reference
-  name: String, // required
-  category: String, // enum: produce, dairy, meat, pantry, frozen, other
-  quantity: Number, // default 1
-  expiryDate: Date, // required
-  status: String, // enum: fresh, expiring-soon, expired, used, wasted
-  createdAt: Date,
-  updatedAt: Date,
+const itemSchemaDefinition = new Schema({
+  householdId: {
+    type: Schema.Types.ObjectId,
+    ref: "Household",
+    required: true,
+  },
+  addedBy: { type: Schema.Types.ObjectId, ref: "User" },
+  name: { type: String, required: true },
+  category: {
+    type: String,
+    enum: ["produce", "dairy", "meat", "pantry", "frozen", "other"],
+  },
+  quantity: { type: Number, default: 1 },
+  expiryDate: { type: Date, required: true },
+  status: {
+    type: String,
+    enum: ["fresh", "expiring-soon", "expired", "used", "wasted"],
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
+
+// Models
+const userSchema = mongoose.model("User", userSchemaDefinition);
+const householdSchema = mongoose.model("Household", householdSchemaDefinition);
+const itemSchema = mongoose.model("Item", itemSchemaDefinition);
 
 module.exports = { userSchema, householdSchema, itemSchema };
